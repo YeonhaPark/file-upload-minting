@@ -35,13 +35,44 @@ const App: FC = () => {
       console.log(e);
     }
   };
+  const uploadMetadata = async (image: string) => {
+    try {
+      const metadata = JSON.stringify({
+        pinataContent: {
+          name: "fileupload",
+          description: "Test",
+          image,
+        },
+        pinataMetadata: {
+          name: "upload.json",
+        },
+      });
+
+      const response = await axios.post(
+        "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+        metadata,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            pinata_api_key: import.meta.env.VITE_PINATA_KEY,
+            pinata_secret_api_key: import.meta.env.VITE_PINATA_SECRET,
+          },
+        }
+      );
+
+      return `https://brown-perfect-bird-907.mypinata.cloud/ipfs/${response.data.IpfsHash}`;
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const onChangeFile = async (e: ChangeEvent<HTMLInputElement>) => {
     try {
       if (!e.target.files) return;
       const formData = new FormData();
       formData.append("file", e.target.files[0]);
-      const imageUrl = uploadImage(formData);
-      console.log(imageUrl);
+      const imageUrl = await uploadImage(formData);
+      const metadataUrl = await uploadMetadata(imageUrl!);
+      console.log(metadataUrl);
     } catch (e) {
       console.error(e);
     }
