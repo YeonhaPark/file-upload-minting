@@ -1,8 +1,8 @@
+import { ChangeEvent, FC, useEffect, useState } from "react";
 import { Button, Flex, Text } from "@chakra-ui/react";
-import { Contract, ethers } from "ethers";
-import { JsonRpcSigner } from "ethers";
-import { FC, useEffect, useState } from "react";
+import { Contract, JsonRpcSigner, ethers } from "ethers";
 import mintContractAbi from "../lib/mintContractAbi.json";
+import axios from "axios";
 
 const App: FC = () => {
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
@@ -13,6 +13,35 @@ const App: FC = () => {
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       setSigner(await provider.getSigner());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const uploadImage = async (formData: FormData) => {
+    try {
+      const response = await axios.post(
+        "https://api.pinata.cloud/pinning/pinFileToIPFS",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            pinata_api_key: import.meta.env.VITE_PINATA_KEY,
+            pinata_secret_api_key: import.meta.env.VITE_PINATA_SECRET,
+          },
+        }
+      );
+      return `https://brown-perfect-bird-907.mypinata.cloud/ipfs/${response.data.IpfsHash}`;
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  const onChangeFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!e.target.files) return;
+      const formData = new FormData();
+      formData.append("file", e.target.files[0]);
+      const imageUrl = uploadImage(formData);
+      console.log(imageUrl);
     } catch (e) {
       console.error(e);
     }
@@ -39,7 +68,10 @@ const App: FC = () => {
       flexDir={"column"}
     >
       {signer ? (
-        <Text>{signer.address}</Text>
+        <>
+          <Text>{signer.address}</Text>
+          <input type="file" onChange={onChangeFile} />
+        </>
       ) : (
         <Button onClick={onClickMetamask}>🦊 로그인</Button>
       )}

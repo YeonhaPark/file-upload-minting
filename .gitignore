@@ -1,6 +1,8 @@
 .deps
 artifacts
 
+.env
+
 # Logs
 logs
 *.log
